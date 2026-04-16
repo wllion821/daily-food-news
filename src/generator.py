@@ -1,44 +1,11 @@
 """Generate static HTML site from filtered news items."""
 
 from datetime import datetime
-from filter import filter_and_categorize
-from fetcher import fetch_all_sources
-from config import CATEGORIES
-
-MAX_ITEMS_PER_COLUMN = 5
-
-# Sub-column definitions per category
-# Each entry: (sub_col_key, sub_col_name, filter_fn)
-def get_sub_columns(item):
-    """Determine which sub-columns an item belongs to."""
-    cols = []
-    title = item.get("title", "")
-    summary = item.get("summary", "")
-    brand = item.get("brand", "")
-
-    # 宾堡集团新闻 sub-column
-    if "宾堡" in brand or "Bimbo" in brand:
-        cols.append(("bimbo", "宾堡集团新闻"))
-
-    # 竞品新闻 sub-column (non-Bimbo brands)
-    else:
-        cols.append(("competitor", "竞品新闻"))
-
-    # 政策/行业 sub-column (policy/signal items)
-    signals = item.get("signals", [])
-    if "政策监管" in signals or "行业活动" in signals:
-        cols.append(("policy", "食品行业政策新闻"))
-    elif item.get("tier") == 1:  # Tier 1 = food safety sources
-        cols.append(("policy", "食品行业政策新闻"))
-
-    return cols
+from .config import CATEGORIES, MAX_ITEMS_PER_COLUMN
 
 
-def generate_site():
-    """Main entry point: fetch, filter, generate."""
-    # Fetch and filter
-    raw_items = fetch_all_sources()
-    filtered_items = filter_and_categorize(raw_items)
+def generate_site(filtered_items: list) -> str:
+    """Build full HTML from filtered/categorized items."""
 
     # Build structure: {category: {sub_col: []}}
     categorized = {cat[0]: {"bimbo": [], "competitor": [], "policy": []} for cat in CATEGORIES}
@@ -47,15 +14,40 @@ def generate_site():
         cols = get_sub_columns(item)
         for col_key, col_name in cols:
             for cat_name, cat_desc in CATEGORIES:
-                # Simple assignment: first match
                 if len(categorized[cat_name][col_key]) < MAX_ITEMS_PER_COLUMN:
                     categorized[cat_name][col_key].append(item)
                     break
 
-    # Generate HTML
     today = datetime.now().strftime("%Y年%m月%d日")
-    html = build_html(today, categorized)
-    return html
+    return build_html(today, categorized)
+
+
+def get_sub_columns(item):
+    """Determine which sub-columns an item belongs to."""
+    cols = []
+    title = item.get("title", "")
+    summary = item.get("summary", "")
+    brand = item.get("brand", "")
+    signals = item.get("signals", [])
+    tier = item.get("tier", 3)
+
+    # Sub-col 1: 宾堡集团新闻
+    if brand and ("宾堡" in brand or "Bimbo" in brand):
+        cols.append(("bimbo", "宾堡集团新闻"))
+
+    # Sub-col 2: 竞品新闻 (non-Bimbo brands)
+    elif brand:
+        cols.append(("competitor", "竞品新闻"))
+
+    # Sub-col 3: 食品行业政策新闻
+    if "政策监管" in signals or "行业活动" in signals:
+        cols.append(("policy", "食品行业政策新闻"))
+    elif tier == 1:  # Tier 1 = food safety sources
+        cols.append(("policy", "食品行业政策新闻"))
+    elif "市场动态" in signals or "正向扩展" in signals:
+        cols.append(("policy", "食品行业政策新闻"))
+
+    return cols
 
 
 def build_html(date_str, categorized):
@@ -90,23 +82,31 @@ def build_html(date_str, categorized):
             </div>
         </section>
         """
+
+    if not categories_html:
+        categories_html = '<p class="empty">今日暂无符合筛选条件的新闻，明日更新。</p>'
+
     return HTML_TEMPLATE.format(date=date_str, categories=categories_html)
 
 
 def render_items(items):
     """Render a list of news items as HTML."""
     if not items:
-        return "<p class='empty'>暂无</p>"
+        return "<p class='empty-col'>暂无</p>"
     html = ""
     for item in items[:MAX_ITEMS_PER_COLUMN]:
         signals = ", ".join(item.get("signals", []))
+        source = item.get("source_name", "")
+        title = item.get("title", "无标题")
+        link = item.get("link", "#")
+        summary = item.get("summary", "")
         html += f"""
         <article class="news-item">
-            <h4><a href="{item['link']}" target="_blank">{item['title']}</a></h4>
-            <p class="summary">{item.get('summary', '')}</p>
+            <h4><a href="{link}" target="_blank" rel="noopener">{title}</a></h4>
+            <p class="summary">{summary[:150]}{'...' if len(summary) > 150 else ''}</p>
             <footer>
-                <span class="source">{item['source_name']}</span>
-                <span class="signals">{signals}</span>
+                <span class="source">{source}</span>
+                {f'<span class="signals">{signals}</span>' if signals else ''}
             </footer>
         </article>
         """
@@ -134,14 +134,15 @@ HTML_TEMPLATE = """<!DOCTYPE html>
         .sub-col {{ background: #12151e; border-radius: 8px; padding: 16px; border: 1px solid #2a2a3a; }}
         .sub-col h3 {{ color: #e0c060; font-size: 1em; margin-bottom: 12px; border-bottom: 1px solid #2a2a3a; padding-bottom: 8px; }}
         .news-item {{ margin-bottom: 16px; }}
-        .news-item h4 {{ font-size: 0.95em; margin-bottom: 4px; }}
+        .news-item h4 {{ font-size: 0.95em; margin-bottom: 4px; line-height: 1.4; }}
         .news-item h4 a {{ color: #e6e6e6; text-decoration: none; }}
         .news-item h4 a:hover {{ color: #f0b90b; }}
-        .news-item .summary {{ font-size: 0.82em; color: #888; margin-bottom: 4px; }}
+        .news-item .summary {{ font-size: 0.82em; color: #888; margin-bottom: 4px; line-height: 1.5; }}
         .news-item footer {{ font-size: 0.75em; color: #555; }}
         .news-item footer .source {{ margin-right: 8px; }}
         .news-item footer .signals {{ color: #7a6a4a; }}
-        .empty {{ color: #444; font-size: 0.85em; text-align: center; padding: 20px 0; }}
+        .empty {{ color: #666; font-size: 1.1em; text-align: center; padding: 60px 0; }}
+        .empty-col {{ color: #444; font-size: 0.85em; text-align: center; padding: 20px 0; }}
         footer {{ text-align: center; color: #444; font-size: 0.8em; padding: 30px; border-top: 1px solid #1a1f2e; margin-top: 40px; }}
         @media (max-width: 768px) {{ .sub-columns {{ grid-template-columns: 1fr; }} }}
     </style>
@@ -156,7 +157,9 @@ HTML_TEMPLATE = """<!DOCTYPE html>
         {categories}
     </main>
     <footer>
-        每日更新 · 数据来源：人工筛选优质信源
+        每日更新 · 数据来源：16个人工筛选优质信源<br>
+        <br>
+        <a href="https://github.com/wllion821/daily-food-news" style="color:#555;">GitHub</a>
     </footer>
 </body>
 </html>
@@ -164,8 +167,16 @@ HTML_TEMPLATE = """<!DOCTYPE html>
 
 
 if __name__ == "__main__":
-    html = generate_site()
-    output_path = "index.html"
-    with open(output_path, "w", encoding="utf-8") as f:
+    # Test with sample data
+    sample = [{
+        "title": "测试新闻：市场监管总局发布新规",
+        "link": "https://news.foodmate.net/2026/04/740737.html",
+        "source_name": "食品伙伴网",
+        "brand": None,
+        "signals": ["政策监管", "行业活动"],
+        "summary": "市场监管总局近日发布了关于食品安全的新规定，对行业将产生重大影响..."
+    }]
+    html = generate_site(sample)
+    with open("/tmp/test_site.html", "w", encoding="utf-8") as f:
         f.write(html)
-    print(f"Generated {output_path}")
+    print("Test site written to /tmp/test_site.html")

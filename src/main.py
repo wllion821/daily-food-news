@@ -5,6 +5,11 @@ Main entry point: fetch sources → fetch article content → filter → generat
 import os, sys, time
 from datetime import datetime
 
+# Ensure parent directory is in path so 'src.xxx' imports work whether
+# running as `python src/main.py` or `python -m src.main`
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
+
 def main():
     from src.fetcher import fetch_all_sources, fetch_article_content
     from src.filter import filter_and_categorize

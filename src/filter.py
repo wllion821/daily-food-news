@@ -1,6 +1,6 @@
-"""Filter news items based on brand keywords, signal keywords, and exclusion rules."""
+"""Filter news items based on brand keywords and signal keywords."""
 
-from config import BRAND_KEYWORDS, SIGNAL_KEYWORDS, EXCLUDE_KEYWORDS, CATEGORIES
+from .config import BRAND_KEYWORDS, SIGNAL_KEYWORDS
 
 
 def is_brand_mentioned(title, summary=""):
@@ -20,7 +20,8 @@ def get_signal_score(title, summary=""):
     matched_signals = []
 
     # Brand match: high priority
-    if is_brand_mentioned(title, summary):
+    brand = is_brand_mentioned(title, summary)
+    if brand:
         score += 10
 
     # Signal keywords
@@ -30,43 +31,33 @@ def get_signal_score(title, summary=""):
                 score += 1
                 matched_signals.append(category)
 
-    return score, list(set(matched_signals))
-
-
-def should_exclude(title, summary=""):
-    """Check if item should be excluded."""
-    text = (title + " " + summary).lower()
-    for kw in EXCLUDE_KEYWORDS:
-        if kw.lower() in text:
-            return True
-    return False
+    return score, list(set(matched_signals)), brand
 
 
 def filter_and_categorize(items):
-    """Filter items by rules, then categorize into 5 major categories."""
+    """
+    Pass items that either:
+    1. Mention a brand keyword (Bimbo or competitor), OR
+    2. Have signal score >= 3 (food safety regulation, industry events)
+
+    All passed items get categorized into sub-columns.
+    """
     filtered = []
 
     for item in items:
         title = item.get("title", "")
         summary = item.get("summary", "")
 
-        # Skip excluded
-        if should_exclude(title, summary):
-            continue
+        score, signals, brand = get_signal_score(title, summary)
 
-        # Must mention a brand (Bimbo or competitor)
-        brand = is_brand_mentioned(title, summary)
-        if not brand:
-            continue
-
-        score, signals = get_signal_score(title, summary)
-
-        filtered.append({
-            **item,
-            "brand": brand,
-            "signal_score": score,
-            "signals": signals,
-        })
+        # Pass if brand match OR strong signal
+        if brand or score >= 3:
+            filtered.append({
+                **item,
+                "brand": brand or "食品行业",
+                "signal_score": score,
+                "signals": signals,
+            })
 
     # Sort by score descending
     filtered.sort(key=lambda x: x["signal_score"], reverse=True)
@@ -75,7 +66,7 @@ def filter_and_categorize(items):
 
 
 if __name__ == "__main__":
-    from fetcher import fetch_all_sources
+    from src.fetcher import fetch_all_sources
     items = fetch_all_sources()
     filtered = filter_and_categorize(items)
     print(f"Filtered {len(filtered)} items from {len(items)} total")

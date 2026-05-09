@@ -2,7 +2,7 @@ name: Daily Food News Update
 
 on:
   schedule:
-    - cron: '0 8 * * *'
+    - cron: '0 0 * * *'
   workflow_dispatch:
 
 permissions:
@@ -10,12 +10,8 @@ permissions:
   pages: write
   id-token: write
 
-concurrency:
-  group: 'pages'
-  cancel-in-progress: true
-
 jobs:
-  fetch-and-build:
+  build-and-deploy:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -28,37 +24,27 @@ jobs:
       - name: Install root dependencies
         run: npm ci
 
+      - name: Fetch and process articles
+        run: npx tsx src/main.ts
+
       - name: Install site dependencies
+        run: cd site && npm ci
+
+      - name: Build Astro site
+        run: cd site && npm run build
+
+      - name: Commit data changes
         run: |
-          cd site
-          npm ci
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add data/ site/src/data/
+          git diff --staged --quiet || git commit -m "docs: auto-update $(date +%Y-%m-%d)"
+          git push
 
-      - name: Build (fetch + Astro)
-        run: npm run build
-
-      - name: Commit and push data changes
-        run: |
-          git config user.name "Daily Food News Bot"
-          git config user.email "bot@daily-food-news.local"
-          if [[ -n $(git status -s data/) ]]; then
-            git add data/
-            git commit -m "chore: update articles $(date +%Y-%m-%d)"
-            git push
-          fi
-
-      - name: Upload site to Pages
+      - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: 'site/dist'
+          path: site/dist
 
-  deploy:
-    needs: fetch-and-build
-    if: always()
-    runs-on: ubuntu-latest
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
-    steps:
       - name: Deploy to GitHub Pages
-        id: deployment
         uses: actions/deploy-pages@v4

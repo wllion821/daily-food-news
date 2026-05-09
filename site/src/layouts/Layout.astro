@@ -1,0 +1,156 @@
+---
+interface Props {
+  title: string;
+}
+const { title } = Astro.props;
+---
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>{title}</title>
+    <style>
+      :root {
+        color-scheme: light;
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+        background: #faf6f1;
+        color: #5c4033;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      html, body {
+        margin: 0;
+        padding: 0;
+        min-height: 100%;
+      }
+
+      body {
+        background: #faf6f1;
+        color: #5c4033;
+      }
+
+      a {
+        color: inherit;
+        text-decoration: none;
+      }
+
+      a:hover {
+        text-decoration: underline;
+      }
+
+      .site-shell {
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+      }
+
+      main {
+        flex: 1;
+        padding: 24px;
+        max-width: 1320px;
+        width: 100%;
+        margin: 0 auto;
+      }
+
+      .content-body {
+        display: flex;
+        flex-direction: column;
+        gap: 24px;
+      }
+
+      footer {
+        background: #3d2b1f;
+        color: #d4c4b0;
+        padding: 24px 20px;
+        text-align: center;
+        font-size: 14px;
+      }
+
+      @media (max-width: 768px) {
+        main {
+          padding: 16px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="site-shell">
+      <main>
+        <div class="content-body">
+          <slot />
+        </div>
+      </main>
+      <footer>每日自动更新 · 数据来源：8个人工筛选优质信源</footer>
+    </div>
+    <script is:inline>
+      document.addEventListener('DOMContentLoaded', function() {
+        // === 标签筛选 ===
+        var tagButtons = document.querySelectorAll('.tag-pill');
+        var categorySections = document.querySelectorAll('.category-section');
+
+        tagButtons.forEach(function(btn) {
+          btn.addEventListener('click', function() {
+            tagButtons.forEach(function(b) { b.classList.remove('active'); });
+            btn.classList.add('active');
+            var cat = btn.getAttribute('data-category');
+            categorySections.forEach(function(sec) {
+              if (cat === 'all') {
+                sec.style.display = '';
+              } else {
+                sec.style.display = sec.getAttribute('data-category-section') === cat ? '' : 'none';
+              }
+            });
+          });
+        });
+
+        // === 搜索过滤 ===
+        var searchInput = document.getElementById('news-search');
+        var noResult = document.getElementById('no-result-msg');
+
+        if (searchInput) {
+          searchInput.addEventListener('input', function() {
+            var keyword = searchInput.value.trim().toLowerCase();
+            var anyVisible = false;
+
+            document.querySelectorAll('.article-card').forEach(function(card) {
+              var title = (card.querySelector('.card-title') || {}).textContent || '';
+              var summary = (card.querySelector('.card-summary') || {}).textContent || '';
+              var match = !keyword || title.toLowerCase().includes(keyword) || summary.toLowerCase().includes(keyword);
+              card.style.display = match ? '' : 'none';
+              if (match) anyVisible = true;
+            });
+
+            // 隐藏没有可见卡片的分类区块
+            categorySections.forEach(function(sec) {
+              var hasVisible = false;
+              sec.querySelectorAll('.article-card').forEach(function(c) {
+                if (c.style.display !== 'none') hasVisible = true;
+              });
+              sec.style.display = hasVisible ? '' : 'none';
+            });
+
+            if (noResult) {
+              noResult.style.display = anyVisible || !keyword ? 'none' : 'block';
+            }
+          });
+        }
+
+        // === 摘要展开/收起 ===
+        document.querySelectorAll('.summary-toggle').forEach(function(btn) {
+          btn.addEventListener('click', function() {
+            var card = btn.closest('.article-card');
+            if (!card) return;
+            var summary = card.querySelector('.card-summary');
+            if (!summary) return;
+            var expanded = card.classList.toggle('expanded');
+            btn.textContent = expanded ? '收起' : '展开';
+          });
+        });
+      });
+    </script>
+  </body>
+</html>

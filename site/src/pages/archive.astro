@@ -1,0 +1,131 @@
+---
+import Layout from "../layouts/Layout.astro";
+import * as fs from "fs";
+import * as path from "path";
+import { fileURLToPath } from "url";
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const archiveDir = path.join(__dirname, "../../data/archive");
+
+let archiveDates: Array<{ date: string; count: number }> = [];
+
+if (fs.existsSync(archiveDir)) {
+  const files = fs.readdirSync(archiveDir);
+
+  for (const file of files) {
+    if (file.endsWith(".json")) {
+      try {
+        const filePath = path.join(archiveDir, file);
+        const content = fs.readFileSync(filePath, "utf-8");
+        const articles = JSON.parse(content);
+        const date = file.replace(".json", "");
+
+        archiveDates.push({
+          date,
+          count: articles.length,
+        });
+      } catch {
+        // ignore invalid archive files
+      }
+    }
+  }
+
+  archiveDates.sort((a, b) => b.date.localeCompare(a.date));
+}
+---
+
+<Layout title="归档 - Daily Food News">
+  <div class="archive-shell">
+    <section class="archive-header">
+      <div>
+        <p class="archive-title">历史归档</p>
+        <p class="archive-subtitle">按日期查看每日情报数据</p>
+        <a href="/daily-food-news/" class="back-link">← 返回首页</a>
+      </div>
+    </section>
+
+    {archiveDates.length === 0 ? (
+      <div class="empty-state">暂无归档数据</div>
+    ) : (
+      <div class="archive-grid">
+        {archiveDates.map((item) => (
+          <a class="archive-card" href={`/daily-food-news/archive/${item.date}/`}>
+            <span>{item.date}</span>
+            <strong>{item.count} 篇</strong>
+          </a>
+        ))}
+      </div>
+    )}
+  </div>
+</Layout>
+
+<style>
+  .archive-shell {
+    background: #fff;
+    border: 1px solid #e8ddd3;
+    border-radius: 20px;
+    padding: 28px;
+  }
+
+  .archive-header {
+    margin-bottom: 24px;
+  }
+
+  .archive-title {
+    font-size: 22px;
+    color: #3d2b1f;
+    font-weight: 700;
+    margin-bottom: 8px;
+  }
+
+  .archive-subtitle {
+    color: #9c8577;
+  }
+
+  .back-link {
+    display: inline-block;
+    margin-top: 12px;
+    color: #c67c4e;
+    text-decoration: none;
+    font-size: 14px;
+    font-weight: 600;
+  }
+
+  .back-link:hover {
+    color: #8b5e3c;
+  }
+
+  .archive-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 16px;
+  }
+
+  .archive-card {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: #fff;
+    border: 1px solid #e8ddd3;
+    border-radius: 14px;
+    padding: 18px 20px;
+    color: #3d2b1f;
+    text-decoration: none;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+  }
+
+  .archive-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 18px rgba(55, 30, 20, 0.08);
+  }
+
+  .archive-card strong {
+    color: #c67c4e;
+  }
+
+  .empty-state {
+    padding: 40px 0;
+    text-align: center;
+    color: #9c8577;
+  }
+</style>

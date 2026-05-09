@@ -1,0 +1,76 @@
+---
+interface Props {
+  total_articles: number;
+  high_value_count: number;
+  risk_count: number;
+  covered_categories: number;
+}
+
+const { total_articles, high_value_count, risk_count, covered_categories } = Astro.props;
+---
+
+<section class="stats-panel">
+  <div class="stats-grid">
+    <div class="stat-card">
+      <div class="stat-number">{total_articles}</div>
+      <div class="stat-label">今日文章</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-number">{high_value_count}</div>
+      <div class="stat-label">高分情报</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-number">{risk_count}</div>
+      <div class="stat-label">风险信号</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-number">{covered_categories}</div>
+      <div class="stat-label">覆盖分类</div>
+    </div>
+  </div>
+</section>
+
+<style>
+  .stats-panel {
+    background: #fff;
+    border: 1px solid #e8ddd3;
+    border-radius: 20px;
+    padding: 24px;
+    margin-bottom: 32px;
+    box-shadow: 0 2px 12px rgba(139, 94, 60, 0.08);
+  }
+
+  .stats-grid {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 16px;
+  }
+
+  .stat-card {
+    background: #fff;
+    border: 1px solid #e8ddd3;
+    border-radius: 12px;
+    padding: 18px 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    min-height: 110px;
+  }
+
+  .stat-number {
+    font-size: 32px;
+    font-weight: 700;
+    color: #c67c4e;
+  }
+
+  .stat-label {
+    font-size: 14px;
+    color: #9c8577;
+  }
+
+  @media (max-width: 768px) {
+    .stats-grid {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+  }
+</style>

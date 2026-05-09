@@ -1,0 +1,14 @@
+{
+  "name": "daily-food-news-site",
+  "version": "1.0.0",
+  "description": "Astro site for Daily Food News",
+  "type": "module",
+  "scripts": {
+    "dev": "astro dev",
+    "build": "astro build",
+    "preview": "astro preview"
+  },
+  "dependencies": {
+    "astro": "^5.1.0"
+  }
+}

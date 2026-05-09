@@ -1,0 +1,75 @@
+{
+  "sources": [
+    {
+      "id": "foodmate",
+      "name": "食品伙伴网",
+      "url": "https://news.foodmate.net/",
+      "type": "scrape",
+      "tier": 1,
+      "article_pattern": "/\\d{4}/\\d{2}/\\d+\\.html",
+      "enabled": true
+    },
+    {
+      "id": "foodmate_rss",
+      "name": "食品伙伴网RSS",
+      "url": "https://www.foodmate.net/feed/",
+      "type": "rss",
+      "tier": 1,
+      "enabled": true
+    },
+    {
+      "id": "foodaily",
+      "name": "Foodaily每日食品",
+      "url": "https://www.foodaily.com/",
+      "type": "scrape",
+      "tier": 1,
+      "article_pattern": "/articles/\\d+",
+      "enabled": true
+    },
+    {
+      "id": "cfsn",
+      "name": "中国食品安全网",
+      "url": "https://www.cfsn.cn/",
+      "type": "scrape",
+      "tier": 1,
+      "article_pattern": "(/\\d{4}/\\d{2}/\\d+|/news/\\d+\\.html|/bw/.*?/list\\.shtml)",
+      "enabled": true
+    },
+    {
+      "id": "foodscn",
+      "name": "中国安全食品网",
+      "url": "http://www.foodscn.cn/",
+      "type": "scrape",
+      "tier": 2,
+      "article_pattern": "(/zixun/|/jujiao/|/jianguan/|/pinpai/|/huizhan/|/baoguang/|/dujia/)",
+      "enabled": true
+    },
+    {
+      "id": "jiemian",
+      "name": "界面新闻",
+      "url": "https://www.jiemian.com/",
+      "type": "scrape",
+      "tier": 3,
+      "article_pattern": "/article/\\d+\\.html",
+      "enabled": true
+    },
+    {
+      "id": "yicai",
+      "name": "第一财经",
+      "url": "https://www.yicai.com/",
+      "type": "scrape",
+      "tier": 3,
+      "article_pattern": "/news/\\d+\\.html",
+      "enabled": true
+    },
+    {
+      "id": "cnfood",
+      "name": "中国食品网",
+      "url": "http://www.cnfood.com/",
+      "type": "scrape",
+      "tier": 3,
+      "article_pattern": "/\\d+\\.html",
+      "enabled": true
+    }
+  ]
+}

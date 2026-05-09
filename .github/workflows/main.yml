@@ -7,19 +7,58 @@ on:
 
 permissions:
   contents: write
+  pages: write
+  id-token: write
+
+concurrency:
+  group: 'pages'
+  cancel-in-progress: true
 
 jobs:
-  update:
+  fetch-and-build:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Set up Python
-        uses: actions/setup-python@v5
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
         with:
-          python-version: '3.11'
-      - name: Install dependencies
-        run: pip install -r requirements.txt
-      - name: Run crawler & generate site
-        env:
-          PYTHONPATH: ${{ github.workspace }}
-        run: python src/main.py
+          node-version: '20'
+
+      - name: Install root dependencies
+        run: npm ci
+
+      - name: Install site dependencies
+        run: |
+          cd site
+          npm ci
+
+      - name: Build (fetch + Astro)
+        run: npm run build
+
+      - name: Commit and push data changes
+        run: |
+          git config user.name "Daily Food News Bot"
+          git config user.email "bot@daily-food-news.local"
+          if [[ -n $(git status -s data/) ]]; then
+            git add data/
+            git commit -m "chore: update articles $(date +%Y-%m-%d)"
+            git push
+          fi
+
+      - name: Upload site to Pages
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: 'site/dist'
+
+  deploy:
+    needs: fetch-and-build
+    if: always()
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

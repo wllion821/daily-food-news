@@ -1,0 +1,77 @@
+---
+import Layout from "../layouts/Layout.astro";
+import Header from "../components/Header.astro";
+import StatsPanel from "../components/StatsPanel.astro";
+import TagFilter from "../components/TagFilter.astro";
+import CategorySection from "../components/CategorySection.astro";
+import articles from "../../../data/articles.json";
+import categoriesConfig from "../../../config/categories.json";
+
+const allArticles = Array.isArray(articles) ? articles : [];
+const categories = Array.isArray(categoriesConfig.categories) ? categoriesConfig.categories : [];
+const categoryMap = Object.fromEntries(categories.map((cat) => [cat.id, cat]));
+
+const articleGroups: Record<string, any[]> = {};
+for (const category of categories) {
+  articleGroups[category.id] = [];
+}
+articleGroups.other = [];
+
+for (const article of allArticles) {
+  const primaryId = article.primary_category || "other";
+  if (!articleGroups[primaryId]) {
+    articleGroups[primaryId] = [];
+  }
+  articleGroups[primaryId].push(article);
+}
+
+const categoryOrder = categories.map((cat) => cat.id).concat(["other"]);
+const visibleCategories = categoryOrder.filter((id) => articleGroups[id] && articleGroups[id].length > 0);
+
+const categoryList = visibleCategories.map((id) => ({
+  id,
+  name: categoryMap[id]?.name || (id === "other" ? "其他" : id),
+  description: categoryMap[id]?.description || (id === "other" ? "其它行业信息" : ""),
+  count: articleGroups[id]?.length || 0,
+}));
+
+const highValueCount = allArticles.filter((article) => Array.isArray(article.signals) && article.signals.length >= 3).length;
+const riskCount = allArticles.filter((article) => Array.isArray(article.signals) && article.signals.includes("负向风险")).length;
+const coveredCategories = visibleCategories.length;
+const todayString = new Date().toLocaleDateString("zh-CN", {
+  year: "numeric",
+  month: "long",
+  day: "numeric",
+});
+---
+
+<Layout title="Daily Food News">
+  <Header date={todayString} />
+
+  <div class="page-content">
+    <StatsPanel
+      total_articles={allArticles.length}
+      high_value_count={highValueCount}
+      risk_count={riskCount}
+      covered_categories={coveredCategories}
+    />
+
+    <TagFilter categories={categoryList} />
+
+    {categoryList.map((category) => (
+      <div class="category-section" data-category-section={category.id}>
+        <CategorySection
+          categoryId={category.id}
+          categoryName={category.name}
+          categoryDescription={category.description}
+          articles={articleGroups[category.id]}
+        />
+      </div>
+    ))}
+
+    <div id="no-result-msg" style="display: none; text-align: center; padding: 40px; color: #9c8577; font-size: 16px;">
+      未找到相关新闻 🍞
+    </div>
+  </div>
+</Layout>
+

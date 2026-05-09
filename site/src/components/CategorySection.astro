@@ -1,0 +1,109 @@
+---
+import ArticleCard from "./ArticleCard.astro";
+
+interface Props {
+  categoryId: string;
+  categoryName: string;
+  categoryDescription: string;
+  articles: any[];
+}
+
+const { categoryId, categoryName, categoryDescription, articles } = Astro.props;
+---
+
+<section class="category-section" data-category-section={categoryId}>
+  <div class="category-title-row">
+    <div class="category-marker"></div>
+    <div>
+      <h2>{categoryName}</h2>
+      <p>{categoryDescription}</p>
+    </div>
+  </div>
+
+  {articles.length === 0 ? (
+    <div class="empty-state">暂无相关新闻</div>
+  ) : (
+    <div class="articles-grid">
+      {articles.map((article) => (
+        <ArticleCard
+          title={article.title}
+          url={article.url}
+          summary={article.summary}
+          source_name={article.source_name}
+          signals={article.signals}
+          score={article.score}
+        />
+      ))}
+    </div>
+  )}
+</section>
+
+<style>
+  .category-section {
+    background-color: #fff8f0;
+    border: 1px solid #e8ddd3;
+    border-radius: 16px;
+    padding: 24px;
+    margin-bottom: 32px;
+  }
+
+  .category-title-row {
+    display: flex;
+    align-items: flex-start;
+    gap: 16px;
+    margin-bottom: 18px;
+  }
+
+  .category-marker {
+    width: 4px;
+    min-height: 48px;
+    border-radius: 999px;
+    background: #c67c4e;
+    margin-top: 4px;
+  }
+
+  h2 {
+    margin: 0;
+    font-size: 22px;
+    color: #3d2b1f;
+    font-weight: 600;
+  }
+
+  p {
+    margin: 6px 0 0;
+    color: #9c8577;
+    font-size: 14px;
+    line-height: 1.7;
+  }
+
+  .articles-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 16px;
+  }
+
+  .empty-state {
+    padding: 24px;
+    color: #9c8577;
+    background: #fff;
+    border: 1px dashed #e8ddd3;
+    border-radius: 12px;
+    text-align: center;
+  }
+
+  @media (max-width: 1199px) {
+    .articles-grid {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+  }
+
+  @media (max-width: 768px) {
+    .category-section {
+      padding: 20px;
+    }
+
+    .articles-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>

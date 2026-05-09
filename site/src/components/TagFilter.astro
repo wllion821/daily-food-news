@@ -1,0 +1,61 @@
+---
+interface Props {
+  categories: Array<{ id: string; name: string; count: number }>;
+}
+const { categories } = Astro.props;
+---
+<section class="tag-filter">
+  <div class="tag-scroll">
+    <button type="button" class="tag-pill active" data-category="all">全部</button>
+    {categories.map((category) => (
+      <button type="button" class="tag-pill" data-category={category.id}>
+        {category.name} ({category.count})
+      </button>
+    ))}
+  </div>
+</section>
+
+<style>
+  .tag-filter {
+    padding: 0 8px;
+    margin-bottom: 24px;
+  }
+
+  .tag-scroll {
+    display: flex;
+    gap: 8px;
+    overflow-x: auto;
+    padding-bottom: 8px;
+  }
+
+  .tag-scroll::-webkit-scrollbar {
+    height: 8px;
+  }
+
+  .tag-scroll::-webkit-scrollbar-thumb {
+    background: #e8ddd3;
+    border-radius: 999px;
+  }
+
+  .tag-pill {
+    white-space: nowrap;
+    border: 1px solid #e8ddd3;
+    background: #f5e6d3;
+    color: #8b5e3c;
+    border-radius: 999px;
+    padding: 10px 16px;
+    cursor: pointer;
+    font-size: 14px;
+    transition: background 0.2s ease, color 0.2s ease;
+  }
+
+  .tag-pill:hover {
+    background: #e8d5c4;
+  }
+
+  .tag-pill.active {
+    background: #c67c4e;
+    color: #ffffff;
+    border-color: transparent;
+  }
+</style>

@@ -1,0 +1,26 @@
+{
+  "fetch": {
+    "timeout_seconds": 15,
+    "delay_between_requests": 0.2,
+    "max_articles_per_source": 30,
+    "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36"
+  },
+  "filter": {
+    "min_title_length": 8,
+    "min_signal_score": 2,
+    "require_brand_match": false,
+    "fallback_top_n": 40
+  },
+  "display": {
+    "max_items_per_category": 10,
+    "title_max_length": 200,
+    "summary_max_length": 360,
+    "site_title": "每日食品行业情报",
+    "site_subtitle": "聚焦烘焙、健康主食、渠道、竞品、原料与监管风险",
+    "footer_text": "每日自动更新 · 数据来源：8个人工筛选优质信源 · AI辅助打分与摘要"
+  },
+  "schedule": {
+    "cron": "0 8 * * *",
+    "timezone": "Asia/Shanghai"
+  }
+}

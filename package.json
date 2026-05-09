@@ -1,0 +1,32 @@
+{
+  "name": "daily-food-news",
+  "version": "1.0.0",
+  "description": "烘焙食品行业情报 — 每日更新。",
+  "main": "dist/main.js",
+  "type": "module",
+  "scripts": {
+    "fetch": "tsx src/main.ts",
+    "build:site": "cd site && npm run build",
+    "build": "npm run fetch && npm run build:site"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/wllion821/daily-food-news.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/wllion821/daily-food-news/issues"
+  },
+  "homepage": "https://github.com/wllion821/daily-food-news#readme",
+  "dependencies": {
+    "cheerio": "^1.2.0",
+    "rss-parser": "^3.13.0",
+    "tsx": "^4.21.0",
+    "typescript": "^6.0.3"
+  },
+  "devDependencies": {
+    "@types/node": "^25.6.2"
+  }
+}

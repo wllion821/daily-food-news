@@ -28,9 +28,9 @@ const { categoryId, categoryName, categoryDescription, articles } = Astro.props;
         <ArticleCard
           title={article.title}
           url={article.url}
-          summary={article.summary}
+          summary={article.ai_summary ?? article.summary}
           source_name={article.source_name}
-          signals={article.signals}
+          signals={article.ai_tags ?? article.signals ?? []}
           score={article.score}
         />
       ))}

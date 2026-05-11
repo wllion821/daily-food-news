@@ -25,6 +25,8 @@ jobs:
         run: npm ci
 
       - name: Fetch and process articles
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
         run: npx tsx src/main.ts
 
       - name: Install site dependencies

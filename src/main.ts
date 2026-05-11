@@ -5,6 +5,7 @@ import { fetchAllFeeds } from "./fetch-feeds.js";
 import { dedup } from "./utils/dedup.js";
 import { filterJunkArticles } from "./filter.js";
 import { categorizeArticles } from "./categorize.js";
+import { aiRankArticles } from "./ai-rank.js";
 import { loadSettings } from "./utils/config-loader.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -43,18 +44,24 @@ async function main() {
     const categorizedArticles = categorizeArticles(filteredArticles);
     console.log(`  分类完成: ${categorizedArticles.length} 篇`);
 
-    // Step 5: 按 settings 截断
+    // Step 5: AI 评分与摘要
+    console.log(`\n[${new Date().toLocaleTimeString("zh-CN")}] Step 5: 开始 Gemini AI 评分与摘要...`);
+    const rankedArticles = await aiRankArticles(categorizedArticles);
+    rankedArticles.sort((a, b) => (b.score ?? 0) - (a.score ?? 0));
+    console.log(`  AI 评分完成: ${rankedArticles.length} 篇`);
+
+    // Step 6: 按 settings 截断
     const settings = loadSettings();
     const displaySettings = settings.display;
-    let finalArticles = categorizedArticles;
+    let finalArticles = rankedArticles;
 
     if (displaySettings.max_items_per_category > 0) {
       console.log(
-        `\n[${new Date().toLocaleTimeString("zh-CN")}] Step 5: 按每个分类截断到 ${displaySettings.max_items_per_category} 篇...`
+        `\n[${new Date().toLocaleTimeString("zh-CN")}] Step 6: 按每个分类截断到 ${displaySettings.max_items_per_category} 篇...`
       );
 
-      const grouped: Record<string, typeof categorizedArticles> = {};
-      for (const article of categorizedArticles) {
+      const grouped: Record<string, typeof rankedArticles> = {};
+      for (const article of rankedArticles) {
         const categoryId = article.primary_category;
         if (!grouped[categoryId]) {
           grouped[categoryId] = [];
@@ -62,7 +69,7 @@ async function main() {
         grouped[categoryId].push(article);
       }
 
-      const truncated: typeof categorizedArticles = [];
+      const truncated: typeof rankedArticles = [];
       for (const categoryId in grouped) {
         truncated.push(...grouped[categoryId].slice(0, displaySettings.max_items_per_category));
       }
@@ -72,7 +79,7 @@ async function main() {
     }
 
     // Step 6: 写入 data/articles.json
-    console.log(`\n[${new Date().toLocaleTimeString("zh-CN")}] Step 6: 写入数据...`);
+    console.log(`\n[${new Date().toLocaleTimeString("zh-CN")}] Step 7: 写入数据...`);
     const dataDir = path.join(__dirname, "../data");
     const archiveDir = path.join(dataDir, "archive");
 
@@ -97,7 +104,7 @@ async function main() {
     fs.writeFileSync(siteArticlesPath, JSON.stringify(finalArticles, null, 2), "utf-8");
     console.log(`  ✓ 写入: ${siteArticlesPath}`);
 
-    // Step 6: 写入归档
+    // Step 8: 写入归档
     const today = new Date();
     const dateStr = today.toISOString().split("T")[0]; // YYYY-MM-DD
     const archivePath = path.join(archiveDir, `${dateStr}.json`);

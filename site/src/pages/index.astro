@@ -25,6 +25,10 @@ for (const article of allArticles) {
   articleGroups[primaryId].push(article);
 }
 
+for (const group of Object.values(articleGroups)) {
+  group.sort((a, b) => (b.score ?? 0) - (a.score ?? 0));
+}
+
 const categoryOrder = categories.map((cat) => cat.id).concat(["other"]);
 const visibleCategories = categoryOrder.filter((id) => articleGroups[id] && articleGroups[id].length > 0);
 
@@ -35,7 +39,7 @@ const categoryList = visibleCategories.map((id) => ({
   count: articleGroups[id]?.length || 0,
 }));
 
-const highValueCount = allArticles.filter((article) => Array.isArray(article.signals) && article.signals.length >= 3).length;
+const highValueCount = allArticles.filter((article) => typeof article.score === "number" && article.score >= 70).length;
 const riskCount = allArticles.filter((article) => Array.isArray(article.signals) && article.signals.includes("负向风险")).length;
 const coveredCategories = visibleCategories.length;
 const todayString = new Date().toLocaleDateString("zh-CN", {
